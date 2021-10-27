@@ -53,14 +53,17 @@ function solve(dict; maxtime=120)
         @constraint(model, T[n] <= TW[n][2])
     end
 
-    # 解く
+    # solve by Cbc
     optimize!(model)
 
-    # 解の出力
+    # objective value
     obj_value = getobjectivevalue(model)
 
     # Y
     selected = [j for j in nodes if value(y[j]) > 0.05]
+
+    # T
+    times = [(j, value(T[j])) for j in nodes if value(T[j]) > 0.05]
 
     # X
     xpos = Set{Tuple{Int, Int}}()
@@ -79,7 +82,25 @@ function solve(dict; maxtime=120)
         end
     end
 
+    # reconstruct travel path
+    path = Int[]
+    node = o
+    for i in 1:length(xpos)
+        for (u, v) in xpos
+            if node == u
+                push!(path, node)
+                node = v
+                delete!(xpos, (u, v))
+            end
+        end
+    end
+    push!(path, o)
+
+
+    # output
     println(obj_value)
     println(xpos)
+    println(times)
     println(selected)
+    println(path)
 end
