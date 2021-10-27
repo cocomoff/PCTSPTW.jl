@@ -3,7 +3,7 @@ export solve
 """
 Build a JuMP model from `dict` instance and solve it
 """
-function solve(dict; maxtime=120)
+function solve(dict; maxtime=120, withcost=false, penalty_coeff=10.0)
     name = dict["name"]
     N = dict["N"]
     P = dict["P"]
@@ -32,7 +32,17 @@ function solve(dict; maxtime=120)
     @variable(model, T[i in nodes], Int)
 
     # たくさん価値を集める
-    @objective(model, Max, sum(P[j] * y[j] for j in nodes))
+    obj = sum(P[j] * y[j] for j in nodes)
+    if !withcost
+        @objective(model, Max, obj)
+    else
+        obj *= penalty_coeff
+        for i in nodesP, j in nodesD
+            (i == j) && continue
+            obj += M[i, j] * x[i, j]
+        end
+        @objective(model, Min, obj)
+    end
 
     # 制約
     for n in nodesN
@@ -85,7 +95,7 @@ function solve(dict; maxtime=120)
     # reconstruct travel path
     path = Int[]
     node = o
-    for i in 1:length(xpos)
+    for _ in 1:length(xpos)
         for (u, v) in xpos
             if node == u
                 push!(path, node)
@@ -96,11 +106,17 @@ function solve(dict; maxtime=120)
     end
     push!(path, o)
 
+    # debug of objective value
+    term1 = sum(P[j] * value(y[j]) for j in nodes)
+    term2 = 0.0
+    for i in nodesP, j in nodesD
+        (i == j) && continue
+        term2 += M[i, j] * value(x[i, j])
+    end
 
     # output
-    println(obj_value)
+    println(obj_value, " ($term1 $term2)")
     println(xpos)
-    println(times)
     println(selected)
     println(path)
 end
