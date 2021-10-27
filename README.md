@@ -1,3 +1,3 @@
-# TSPTW using JuMP and Cbc
+# Prize-Collecting TSPTW using JuMP and Cbc
 
-- solver and examples
+- solver and examplesgi
