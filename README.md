@@ -1,3 +1,6 @@
+![logo](resources/logo.png)
+
+
 # Prize-Collecting TSPTW using JuMP and Cbc
 
 - solver and examples
